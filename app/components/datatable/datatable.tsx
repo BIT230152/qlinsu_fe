@@ -3,6 +3,9 @@ import { getUser, updateUser, deleteUser } from "./datatable.ts";
 import { Pagination } from "./Pagination";
 import type { User } from "../../types/user";
 import AddForm from "./AddForm";
+import EditForm from "./EditForm";
+import ViewUser from "./ViewUser";
+
 
 export default function DataTable() {
   // Thêm states cho phân trang
@@ -55,6 +58,7 @@ export default function DataTable() {
   // Thêm handlers cho actions
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
+  const [showViewUser, setShowViewUser] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
 
@@ -62,22 +66,24 @@ export default function DataTable() {
     setShowAddForm(true);
   };
 
-  const handleView = (id: number) => {
-    console.log("View user:", id);
+  const handleView = (user: User) => {
+    setSelectedUser(user);
+    setShowViewUser(true);
   };
 
-  const handleEdit = (id: number) => {
-    console.log("edit user:", id);
+  const handleEdit = (user: User) => {
+    setSelectedUser(user);
+    setShowEditForm(true);
   };
 
   const handleDelete = async (id: number) => {
-    if (window.confirm("Are you sure you want to delete this user?")) {
+    if (window.confirm("Bạn có chắc chắn muốn xóa người dùng này?")) {
       try {
         await deleteUser(id);
         setUsers(users.filter((user) => user.id !== id));
       } catch (error) {
         console.error("Error deleting user:", error);
-        // Handle error (show message to user)
+        alert("Không thể xóa người dùng. Vui lòng thử lại!");
       }
     }
   };
@@ -129,37 +135,19 @@ export default function DataTable() {
               />
               <span className="absolute right-3 top-2.5 text-gray-400">🔍</span>
             </div>
-            
           </div>
           <button
-              onClick={handleAdd}
-              className="p-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600"
-            >
-              Thêm người dùng
-            </button>
+            onClick={handleAdd}
+            className="p-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600"
+          >
+            Thêm người dùng
+          </button>
 
           {/* Control Buttons */}
           <div className="flex items-center gap-2">
             <div className="relative"></div>
           </div>
         </div>
-        {/* Hiển thị AddForm khi showAddForm = true */}
-        {showAddForm && (
-          <AddForm
-            onSuccess={async () => {
-              // Reload users
-              try {
-                const response = await getUser();
-                const userData = response.data || response;
-                setUsers(Array.isArray(userData) ? userData : [userData]);
-              } catch (err) {
-                setError("Không thể tải dữ liệu người dùng");
-              }
-              setShowAddForm(false);
-            }}
-            onCancel={() => setShowAddForm(false)}
-          />
-        )}
 
         {/* Table với dữ liệu đã được filter */}
         <div className="shadow overflow">
@@ -190,14 +178,14 @@ export default function DataTable() {
                     <td className="p-3">
                       <div className="flex gap-2">
                         <button
-                          onClick={() => handleView(user.id)}
+                          onClick={() => handleView(user)}
                           className="p-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
                           title="Xem"
                         >
                           👁️
                         </button>
                         <button
-                          onClick={() => handleEdit(user.id)}
+                          onClick={() => handleEdit(user)}
                           className="p-1.5 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600"
                           title="Sửa"
                         >
@@ -239,6 +227,51 @@ export default function DataTable() {
           />
         )}
       </div>
+
+      {/* Hiển thị AddForm khi showAddForm = true */}
+      {showAddForm && (
+        <AddForm
+          onSuccess={async () => {
+            const response = await getUser();
+            const userData = response.data || response;
+            setUsers(Array.isArray(userData) ? userData : [userData]);
+            setShowAddForm(false);
+          }}
+          onClose={() => {
+            console.log("Huỷ form được gọi");
+            setShowAddForm(false);
+          }}
+        />
+      )}
+
+      {/* Hiển thị EditForm khi showEditForm = true */}
+      {showEditForm && selectedUser && (
+        <EditForm
+          user={selectedUser}
+          onSuccess={async () => {
+            const response = await getUser();
+            const userData = response.data || response;
+            setUsers(Array.isArray(userData) ? userData : [userData]);
+            setShowEditForm(false);
+            setSelectedUser(null);
+          }}
+          onCancel={() => {
+            setShowEditForm(false);
+            setSelectedUser(null);
+          }}
+        />
+      )}
+
+      {/* Hiển thị ViewUser khi showViewUser = true */}
+      {showViewUser && selectedUser && (
+        <ViewUser
+          user={selectedUser}
+          onClose={() => {
+            setShowViewUser(false);
+            setSelectedUser(null);
+          }}
+        />
+      )}
     </div>
   );
 }
