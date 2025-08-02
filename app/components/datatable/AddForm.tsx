@@ -4,24 +4,29 @@ import { addUser } from "./datatable";
 
 interface AddFormProps {
   onSuccess: () => void;
-  onCancel: () => void;
+  onClose: () => void;
 }
 
-export default function AddForm({ onSuccess, onCancel }: AddFormProps) {
+export default function AddForm({ onSuccess, onClose }: AddFormProps) {
   const [form, setForm] = useState<Omit<User, "id">>({
     name: "",
     email: "",
     age: 0,
     gender: "",
     address: "",
-    role:null,
+    role: null,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: name === "age" ? Number(value) : value }));
+    setForm((prev) => ({
+      ...prev,
+      [name]: name === "age" || name === "role" ? Number(value) : value,
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,13 +43,19 @@ export default function AddForm({ onSuccess, onCancel }: AddFormProps) {
     }
   };
 
+  const handleCancel = () => {
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50 t">
       <form
         onSubmit={handleSubmit}
         className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md space-y-4"
       >
-        <h2 className="text-xl font-bold mb-2 text-black">Thêm người dùng mới</h2>
+        <h2 className="text-xl font-bold mb-2 text-black">
+          Thêm người dùng mới
+        </h2>
         {error && <div className="text-red-500">{error}</div>}
         <input
           name="name"
@@ -94,14 +105,14 @@ export default function AddForm({ onSuccess, onCancel }: AddFormProps) {
           value={form.role ?? ""}
           onChange={handleChange}
           placeholder="Vai trò"
+          type="number"
           className="w-full px-3 py-2 border rounded"
         />
         <div className="flex gap-2 justify-end mt-4">
           <button
             type="button"
-            onClick={onCancel}
+            onClick={handleCancel}
             className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-            disabled={loading}
           >
             Hủy
           </button>
@@ -117,4 +128,3 @@ export default function AddForm({ onSuccess, onCancel }: AddFormProps) {
     </div>
   );
 }
-

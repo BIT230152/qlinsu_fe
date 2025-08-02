@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { getUser, updateUser, deleteUser } from "./datatable.ts";
+import { getUser, updateUser, deleteUser, fetchUserById } from "./datatable.ts";
 import { Pagination } from "./Pagination";
 import type { User } from "../../types/user";
 import AddForm from "./AddForm";
+import EditForm from "./EditForm";
+import ViewUser from "./ViewUser";
+
 
 export default function DataTable() {
   // Thêm states cho phân trang
@@ -38,7 +41,9 @@ export default function DataTable() {
         setUsers(Array.isArray(userData) ? userData : [userData]);
         setLoading(false);
       } catch (err) {
-        setError("Không thể tải dữ liệu người dùng");
+        console.error("Error in fetchUsers:", err);
+        const errorMessage = err instanceof Error ? err.message : "Không thể tải dữ liệu người dùng";
+        setError(errorMessage);
         setLoading(false);
       }
     };
@@ -55,6 +60,7 @@ export default function DataTable() {
   // Thêm handlers cho actions
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
+  const [showViewUser, setShowViewUser] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
 
@@ -62,22 +68,48 @@ export default function DataTable() {
     setShowAddForm(true);
   };
 
-  const handleView = (id: number) => {
-    console.log("View user:", id);
+  const handleView = async (id: number) => {
+    try {
+      const response = await fetchUserById(id);
+      // Xử lý dữ liệu trả về để đảm bảo cấu trúc nhất quán
+      const userData = response.data || response;
+      if (userData && typeof userData === 'object') {
+        setSelectedUser(userData);
+        setShowViewUser(true);
+      } else {
+        throw new Error("Dữ liệu người dùng không hợp lệ");
+      }
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      alert("Không thể tải thông tin người dùng. Vui lòng thử lại!");
+    }
   };
 
-  const handleEdit = (id: number) => {
-    console.log("edit user:", id);
+  const handleEdit = async (id: number) => {
+    try {
+      const response = await fetchUserById(id);
+      // Xử lý dữ liệu trả về để đảm bảo cấu trúc nhất quán
+      const userData = response.data || response;
+      if (userData && typeof userData === 'object') {
+        setSelectedUser(userData);
+        setShowEditForm(true);
+      } else {
+        throw new Error("Dữ liệu người dùng không hợp lệ");
+      }
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      alert("Không thể tải thông tin người dùng. Vui lòng thử lại!");
+    }
   };
 
   const handleDelete = async (id: number) => {
-    if (window.confirm("Are you sure you want to delete this user?")) {
+    if (window.confirm("Bạn có chắc chắn muốn xóa người dùng này?")) {
       try {
         await deleteUser(id);
         setUsers(users.filter((user) => user.id !== id));
       } catch (error) {
         console.error("Error deleting user:", error);
-        // Handle error (show message to user)
+        alert("Không thể xóa người dùng. Vui lòng thử lại!");
       }
     }
   };
@@ -129,37 +161,19 @@ export default function DataTable() {
               />
               <span className="absolute right-3 top-2.5 text-gray-400">🔍</span>
             </div>
-            
           </div>
           <button
-              onClick={handleAdd}
-              className="p-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600"
-            >
-              Thêm người dùng
-            </button>
+            onClick={handleAdd}
+            className="p-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600"
+          >
+            Thêm người dùng
+          </button>
 
           {/* Control Buttons */}
           <div className="flex items-center gap-2">
             <div className="relative"></div>
           </div>
         </div>
-        {/* Hiển thị AddForm khi showAddForm = true */}
-        {showAddForm && (
-          <AddForm
-            onSuccess={async () => {
-              // Reload users
-              try {
-                const response = await getUser();
-                const userData = response.data || response;
-                setUsers(Array.isArray(userData) ? userData : [userData]);
-              } catch (err) {
-                setError("Không thể tải dữ liệu người dùng");
-              }
-              setShowAddForm(false);
-            }}
-            onCancel={() => setShowAddForm(false)}
-          />
-        )}
 
         {/* Table với dữ liệu đã được filter */}
         <div className="shadow overflow">
@@ -239,6 +253,51 @@ export default function DataTable() {
           />
         )}
       </div>
+
+      {/* Hiển thị AddForm khi showAddForm = true */}
+      {showAddForm && (
+        <AddForm
+          onSuccess={async () => {
+            const response = await getUser();
+            const userData = response.data || response;
+            setUsers(Array.isArray(userData) ? userData : [userData]);
+            setShowAddForm(false);
+          }}
+          onClose={() => {
+            console.log("Huỷ form được gọi");
+            setShowAddForm(false);
+          }}
+        />
+      )}
+
+      {/* Hiển thị EditForm khi showEditForm = true */}
+      {showEditForm && selectedUser && (
+        <EditForm
+          user={selectedUser}
+          onSuccess={async () => {
+            const response = await getUser();
+            const userData = response.data || response;
+            setUsers(Array.isArray(userData) ? userData : [userData]);
+            setShowEditForm(false);
+            setSelectedUser(null);
+          }}
+          onCancel={() => {
+            setShowEditForm(false);
+            setSelectedUser(null);
+          }}
+        />
+      )}
+
+      {/* Hiển thị ViewUser khi showViewUser = true */}
+      {showViewUser && selectedUser && (
+        <ViewUser
+          user={selectedUser}
+          onClose={() => {
+            setShowViewUser(false);
+            setSelectedUser(null);
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -16,5 +16,6 @@ export default [
   route("datatable", "components/datatable/datatable.tsx"),
   route("datatable/edit", "components/datatable/EditForm.tsx"),
   route("datatable/add", "components/datatable/AddForm.tsx"),
+  route("datatable/view", "components/datatable/ViewUser.tsx"),
   route("login", "components/auth/login.tsx"),
 ] satisfies RouteConfig;
