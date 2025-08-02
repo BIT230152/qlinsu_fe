@@ -9,17 +9,54 @@ interface EditFormProps {
 }
 
 export default function EditForm({ user, onSuccess, onCancel }: EditFormProps) {
+  // Kiểm tra nếu user không hợp lệ
+  if (!user || !user.id) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
+        <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md space-y-4">
+          <h2 className="text-xl font-bold mb-2 text-black">
+            Lỗi
+          </h2>
+          <p className="text-red-500">Không tìm thấy thông tin người dùng để chỉnh sửa</p>
+          <div className="flex justify-end mt-4">
+            <button
+              onClick={onCancel}
+              className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+            >
+              Đóng
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const [form, setForm] = useState<User>({
     id: user.id,
-    name: user.name,
-    email: user.email,
-    age: user.age,
-    gender: user.gender,
-    address: user.address,
-    role: user.role,
+    name: user.name || "",
+    email: user.email || "",
+    age: user.age || 0,
+    gender: user.gender || "",
+    address: user.address || "",
+    role: user.role || null,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Cập nhật form khi user thay đổi
+  useEffect(() => {
+    if (user) {
+      setForm({
+        id: user.id,
+        name: user.name || "",
+        email: user.email || "",
+        age: user.age || 0,
+        gender: user.gender || "",
+        address: user.address || "",
+        role: user.role || null,
+      });
+    }
+  }, [user]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>

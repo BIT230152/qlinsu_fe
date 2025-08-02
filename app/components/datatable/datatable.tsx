@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getUser, updateUser, deleteUser } from "./datatable.ts";
+import { getUser, updateUser, deleteUser, fetchUserById } from "./datatable.ts";
 import { Pagination } from "./Pagination";
 import type { User } from "../../types/user";
 import AddForm from "./AddForm";
@@ -41,7 +41,9 @@ export default function DataTable() {
         setUsers(Array.isArray(userData) ? userData : [userData]);
         setLoading(false);
       } catch (err) {
-        setError("Không thể tải dữ liệu người dùng");
+        console.error("Error in fetchUsers:", err);
+        const errorMessage = err instanceof Error ? err.message : "Không thể tải dữ liệu người dùng";
+        setError(errorMessage);
         setLoading(false);
       }
     };
@@ -66,14 +68,38 @@ export default function DataTable() {
     setShowAddForm(true);
   };
 
-  const handleView = (user: User) => {
-    setSelectedUser(user);
-    setShowViewUser(true);
+  const handleView = async (id: number) => {
+    try {
+      const response = await fetchUserById(id);
+      // Xử lý dữ liệu trả về để đảm bảo cấu trúc nhất quán
+      const userData = response.data || response;
+      if (userData && typeof userData === 'object') {
+        setSelectedUser(userData);
+        setShowViewUser(true);
+      } else {
+        throw new Error("Dữ liệu người dùng không hợp lệ");
+      }
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      alert("Không thể tải thông tin người dùng. Vui lòng thử lại!");
+    }
   };
 
-  const handleEdit = (user: User) => {
-    setSelectedUser(user);
-    setShowEditForm(true);
+  const handleEdit = async (id: number) => {
+    try {
+      const response = await fetchUserById(id);
+      // Xử lý dữ liệu trả về để đảm bảo cấu trúc nhất quán
+      const userData = response.data || response;
+      if (userData && typeof userData === 'object') {
+        setSelectedUser(userData);
+        setShowEditForm(true);
+      } else {
+        throw new Error("Dữ liệu người dùng không hợp lệ");
+      }
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      alert("Không thể tải thông tin người dùng. Vui lòng thử lại!");
+    }
   };
 
   const handleDelete = async (id: number) => {
@@ -178,14 +204,14 @@ export default function DataTable() {
                     <td className="p-3">
                       <div className="flex gap-2">
                         <button
-                          onClick={() => handleView(user)}
+                          onClick={() => handleView(user.id)}
                           className="p-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
                           title="Xem"
                         >
                           👁️
                         </button>
                         <button
-                          onClick={() => handleEdit(user)}
+                          onClick={() => handleEdit(user.id)}
                           className="p-1.5 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600"
                           title="Sửa"
                         >

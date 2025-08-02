@@ -40,7 +40,14 @@ export const fetchUserById = async (id: number) => {
         }
         
         const data = await response.json();
-        return data;
+        console.log("fetchUserById - API response:", data);
+        
+        // Đảm bảo trả về dữ liệu đúng format
+        if (data && typeof data === 'object') {
+            return data;
+        } else {
+            throw new Error("Dữ liệu trả về không hợp lệ");
+        }
     } catch (error) {
         console.error("Error fetching user by id:", error);
         throw error;
